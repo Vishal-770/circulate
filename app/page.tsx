@@ -77,7 +77,7 @@ export default function Home() {
               Developers
             </a>
             <a
-              href="https://github.com/circlefin/bridge-kit"
+              href="https://github.com/Vishal-770/circulate"
               target="_blank"
               className="hover:text-primary transition-colors"
             >

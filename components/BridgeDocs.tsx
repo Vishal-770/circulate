@@ -108,7 +108,7 @@ export default function BridgeDocs() {
           </a>
 
           <a
-            href="https://developers.circle.com/circle-mint/docs/cctp-overview"
+            href="https://developers.circle.com/crosschain-transfers"
             target="_blank"
             rel="noopener noreferrer"
             className="group"
