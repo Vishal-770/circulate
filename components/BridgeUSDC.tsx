@@ -38,7 +38,7 @@ import {
 } from "viem/chains";
 import { arcTestnet, customSepolia } from "@/lib/privy_config";
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
+import { cn, formatBalance } from "@/lib/utils";
 
 // shadcn UI components
 import { Button } from "@/components/ui/button";
@@ -124,12 +124,27 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
     decimals: 6,
     symbol: "Base",
-    icon: "https://cryptologos.cc/logos/base-base-logo.png",
+    icon: "https://avatars.githubusercontent.com/u/108554348?s=200&v=4", // Base Logo
   },
   {
     name: "Arbitrum Sepolia",
     identifier: "Arbitrum_Sepolia" as BridgeChain,
-    viemChain: arbitrumSepolia,
+    viemChain: {
+      ...arbitrumSepolia,
+      fees: {
+        ...arbitrumSepolia.fees,
+        /**
+         * Arbitrum Sepolia requires a minimum priority fee of 25 Gwei.
+         * We override the estimation to ensure transactions are accepted by the network.
+         */
+        async estimateFeesPerGas() {
+          return {
+            maxPriorityFeePerGas: parseUnits("30", 9), // 30 Gwei for buffer
+            maxFeePerGas: parseUnits("50", 9), // 50 Gwei for buffer
+          };
+        },
+      },
+    },
     usdcAddress: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
     decimals: 6,
     symbol: "Arb",
@@ -165,7 +180,22 @@ const SUPPORTED_CHAINS = [
   {
     name: "Polygon Amoy",
     identifier: "Polygon_Amoy_Testnet" as BridgeChain,
-    viemChain: polygonAmoy,
+    viemChain: {
+      ...polygonAmoy,
+      fees: {
+        ...polygonAmoy.fees,
+        /**
+         * Polygon Amoy requires a minimum priority fee of 25 Gwei.
+         * We override the estimation to ensure transactions are accepted by the network.
+         */
+        async estimateFeesPerGas() {
+          return {
+            maxPriorityFeePerGas: parseUnits("30", 9), // 30 Gwei for buffer
+            maxFeePerGas: parseUnits("50", 9), // 50 Gwei for buffer
+          };
+        },
+      },
+    },
     usdcAddress: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
     decimals: 6,
     symbol: "Matic",
@@ -187,7 +217,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0xFEce4462D57bD51A6A552365A011b95f0E16d9B7",
     decimals: 6,
     symbol: "Linea",
-    icon: "https://cryptologos.cc/logos/linea-logo.png",
+    icon: "https://avatars.githubusercontent.com/u/120616142?s=200&v=4", // Linea Logo
   },
 ];
 
@@ -408,7 +438,7 @@ export default function BridgeUSDC() {
             address: address as `0x${string}`,
           });
           const decimals = chain.viemChain.nativeCurrency.decimals;
-          return Number(formatUnits(balance, decimals)).toFixed(2);
+          return formatUnits(balance, decimals);
         } else {
           balance = await publicClient.readContract({
             address: chain.usdcAddress as `0x${string}`,
@@ -416,7 +446,7 @@ export default function BridgeUSDC() {
             functionName: "balanceOf",
             args: [address as `0x${string}`],
           });
-          return Number(formatUnits(balance, chain.decimals)).toFixed(2);
+          return formatUnits(balance, chain.decimals);
         }
       } catch (e) {
         console.error(`Error fetching balance for ${chain.name}:`, e);
@@ -652,26 +682,55 @@ export default function BridgeUSDC() {
           },
         ]);
       } else {
+        // Robust Gas Fee Fix: Intercept the provider's request method
+        // This ensures that even if the SDK hardcodes low fees, we force the correct values
+        // right before they reach MetaMask.
+        const interceptedProvider: EIP1193Provider = {
+          ...provider,
+          request: async (args: any) => {
+            if (
+              args.method === "eth_sendTransaction" &&
+              args.params?.[0] &&
+              (sourceKey === "Arbitrum_Sepolia" ||
+                sourceKey === "Polygon_Amoy_Testnet")
+            ) {
+              const tx = args.params[0];
+              console.log("Intercepted Bridge Transaction:", tx);
+
+              // Force the gas values to meet network minimums
+              // maxPriorityFeePerGas: 30 Gwei, maxFeePerGas: 60 Gwei (to be safe above base fee)
+              tx.maxPriorityFeePerGas = `0x${parseUnits("30", 9).toString(16)}`;
+              tx.maxFeePerGas = `0x${parseUnits("60", 9).toString(16)}`;
+
+              console.log("Forced Gas Overrides Applied:", {
+                maxPriorityFeePerGas: tx.maxPriorityFeePerGas,
+                maxFeePerGas: tx.maxFeePerGas,
+              });
+            }
+            return (provider as any).request(args);
+          },
+        } as any;
+
         const kit = new BridgeKit();
         const adapter = await createViemAdapterFromProvider({
-          provider: provider as EIP1193Provider,
-          getPublicClient: ({ chain }) =>
-            createPublicClient({
-              chain,
-              transport: http(undefined, {
-                batch: true,
-                retryCount: 3,
-                retryDelay: 1500,
-                timeout: 15_000,
-              }),
-              batch: { multicall: true },
-            }),
-        });
+          provider: interceptedProvider,
+        } as any);
+
+        // Still pass gas values to kit.bridge if supported (as a fallback)
+        const gasOverrides =
+          sourceKey === "Arbitrum_Sepolia" ||
+          sourceKey === "Polygon_Amoy_Testnet"
+            ? {
+                maxPriorityFeePerGas: parseUnits("30", 9),
+                maxFeePerGas: parseUnits("60", 9),
+              }
+            : {};
 
         const result = await kit.bridge({
           from: { adapter, chain: sourceKey },
           to: { adapter, chain: destKey },
-          amount: amount,
+          amount: formatBalance(amount, 6),
+          ...gasOverrides,
         });
 
         setSteps(
@@ -721,7 +780,7 @@ export default function BridgeUSDC() {
   }, [amount, sourceBalance]);
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <div
         className={cn(
           "flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center transition-all duration-500",
@@ -871,12 +930,12 @@ export default function BridgeUSDC() {
                       {isLoadingSource ? (
                         <Skeleton className="h-3 w-12" />
                       ) : (
-                        <span>{sourceBalance} USDC</span>
+                        <span>{formatBalance(sourceBalance)} USDC</span>
                       )}
                     </div>
                     {!isLoadingSource && (
                       <span className="text-[10px] text-muted-foreground/60">
-                        {nativeSourceBalance}{" "}
+                        {formatBalance(nativeSourceBalance)}{" "}
                         {sourceChain.viemChain.nativeCurrency.symbol}
                       </span>
                     )}
@@ -891,14 +950,21 @@ export default function BridgeUSDC() {
                       }
                       disabled={status === "bridging"}
                     >
-                      <SelectTrigger className="w-[160px] border-none shadow-none bg-transparent hover:bg-accent font-bold text-lg h-auto py-1 px-2 text-left">
+                      <SelectTrigger className="w-[180px] border-none shadow-none bg-transparent hover:bg-accent font-bold text-lg h-auto py-1 px-2 text-left">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {SUPPORTED_CHAINS.map((c) => (
                           <SelectItem key={c.identifier} value={c.identifier}>
                             <div className="flex items-center gap-2">
-                              {c.name}
+                              {c.icon && (
+                                <img 
+                                  src={c.icon} 
+                                  alt="" 
+                                  className="h-4 w-4 rounded-full object-contain" 
+                                />
+                              )}
+                              <span>{c.name}</span>
                             </div>
                           </SelectItem>
                         ))}
@@ -937,7 +1003,17 @@ export default function BridgeUSDC() {
                       size="sm"
                       variant="link"
                       className="h-auto p-0 text-primary font-bold"
-                      onClick={() => setAmount(sourceBalance)}
+                      onClick={() => {
+                        if (sourceKey === "Arc_Testnet") {
+                          const bal = parseFloat(sourceBalance);
+                          // Truncate to 6 decimals for bridge compatibility
+                          const buffered = Math.max(0, bal - 1).toString();
+                          setAmount(formatBalance(buffered, 6));
+                        } else {
+                          // Ensure even non-Arc balances are capped at 6 decimals for UI/Bridge consistency
+                          setAmount(formatBalance(sourceBalance, 6));
+                        }
+                      }}
                       disabled={status === "bridging"}
                     >
                       MAX
@@ -969,12 +1045,12 @@ export default function BridgeUSDC() {
                       {isLoadingDest ? (
                         <Skeleton className="h-3 w-12" />
                       ) : (
-                        <span>{destBalance} USDC</span>
+                        <span>{formatBalance(destBalance)} USDC</span>
                       )}
                     </div>
                     {!isLoadingDest && (
                       <span className="text-[10px] text-muted-foreground/60">
-                        {nativeDestBalance}{" "}
+                        {formatBalance(nativeDestBalance)}{" "}
                         {destChain.viemChain.nativeCurrency.symbol}
                       </span>
                     )}
@@ -989,20 +1065,29 @@ export default function BridgeUSDC() {
                       }
                       disabled={status === "bridging"}
                     >
-                      <SelectTrigger className="w-[160px] border-none shadow-none bg-transparent hover:bg-accent font-bold text-lg h-auto py-1 px-2 text-left">
+                      <SelectTrigger className="w-[180px] border-none shadow-none bg-transparent hover:bg-accent font-bold text-lg h-auto py-1 px-2 text-left">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {SUPPORTED_CHAINS.map((c) => (
                           <SelectItem key={c.identifier} value={c.identifier}>
-                            {c.name}
+                            <div className="flex items-center gap-2">
+                              {c.icon && (
+                                <img 
+                                  src={c.icon} 
+                                  alt="" 
+                                  className="h-4 w-4 rounded-full object-contain" 
+                                />
+                              )}
+                              <span>{c.name}</span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <div className="text-right py-1">
                       <span className="text-2xl font-bold text-muted-foreground/50">
-                        {amount || "0.00"}
+                        {amount ? formatBalance(amount) : "0.00"}
                       </span>
                     </div>
                   </div>
@@ -1097,6 +1182,31 @@ export default function BridgeUSDC() {
                 </div>
               )}
             </CardContent>
+
+            <Separator className="opacity-50" />
+            
+            <div className="px-6 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-3">
+                Supported Networks
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {SUPPORTED_CHAINS.map((c) => (
+                  <div 
+                    key={c.identifier} 
+                    className="group relative"
+                    title={c.name}
+                  >
+                    <div className="h-8 w-8 rounded-full border border-border bg-muted/30 p-1.5 transition-all hover:border-primary/50 hover:bg-muted/50">
+                      <img 
+                        src={c.icon} 
+                        alt={c.name} 
+                        className="h-full w-full object-contain filter grayscale opacity-60 transition-all group-hover:grayscale-0 group-hover:opacity-100" 
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <CardFooter className="pt-2">
               {!isValidAmount &&
