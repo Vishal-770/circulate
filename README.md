@@ -2,7 +2,7 @@
 
 **Circulate** is a premium, high-performance cross-chain bridge designed for seamless USDC transfers across multiple testnet ecosystems. Built with Circle's **Bridge Kit v2** and **CCTP**, it offers a streamlined "swap-style" experience with sub-second finality.
 
-## 🌐 Supported Testnets (18)
+## 🌐 Supported Testnets (15)
 Circulate provides a unified interface for 18 distinct testnet environments:
 
 *   **Arc Testnet** (Native Gas)
