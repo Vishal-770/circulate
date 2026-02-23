@@ -80,6 +80,30 @@ export const xdcApothem = {
   },
 } as const;
 
+export const monadTestnet = {
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://testnet-rpc.monad.xyz"] },
+  },
+  blockExplorers: {
+    default: { name: "MonadScan", url: "https://testnet.monadexplorer.com" },
+  },
+} as const;
+
+export const codexTestnet = {
+  id: 812242,
+  name: "Codex Testnet",
+  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://rpc.codex-stg.xyz"] },
+  },
+  blockExplorers: {
+    default: { name: "Codex Explorer", url: "https://explorer.codex-stg.xyz" },
+  },
+} as const;
+
 export const config = {
   // Create embedded wallets for users who don't have a wallet
   embeddedWallets: {
@@ -99,6 +123,8 @@ export const config = {
     worldChainSepolia,
     inkTestnet,
     xdcApothem,
+    monadTestnet,
+    codexTestnet,
   ],
 };
 

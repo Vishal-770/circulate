@@ -36,7 +36,7 @@ import {
   unichainSepolia,
   lineaSepolia,
 } from "viem/chains";
-import { arcTestnet, customSepolia, seiTestnet, worldChainSepolia, inkTestnet, xdcApothem } from "@/lib/privy_config";
+import { arcTestnet, customSepolia, seiTestnet, worldChainSepolia, inkTestnet, xdcApothem, monadTestnet, codexTestnet } from "@/lib/privy_config";
 import { useQuery } from "@tanstack/react-query";
 import { cn, formatBalance } from "@/lib/utils";
 
@@ -109,7 +109,9 @@ type BridgeChain =
   | "Sei_Testnet"
   | "World_Chain_Sepolia"
   | "Ink_Testnet"
-  | "XDC_Apothem";
+  | "XDC_Apothem"
+  | "Monad_Testnet"
+  | "Codex_Testnet";
 
 const SUPPORTED_CHAINS = [
   {
@@ -259,6 +261,24 @@ const SUPPORTED_CHAINS = [
     symbol: "XDC",
     icon: "/xdc-faucet-logo.png",
   },
+  {
+    name: "Monad Testnet",
+    identifier: "Monad_Testnet" as BridgeChain,
+    viemChain: monadTestnet,
+    usdcAddress: "0x534b2f3A21130d7a60830c2Df862319e593943A3",
+    decimals: 6,
+    symbol: "MON",
+    icon: "https://ethglobal.storage/static/faucet/monad-testnet.png",
+  },
+  {
+    name: "Codex Testnet",
+    identifier: "Codex_Testnet" as BridgeChain,
+    viemChain: codexTestnet,
+    usdcAddress: "0x6d7f141b6819C2c9CC2f818e6ad549E7Ca090F8f",
+    decimals: 6,
+    symbol: "ETH",
+    icon: "https://codex.xyz/logo.svg",
+  },
 ];
 
 const TOKEN_MESSENGER_ABI = [
@@ -351,6 +371,14 @@ const CCTP_CONFIG: Record<BridgeChain, { messenger: string; domain: number }> =
     XDC_Apothem: {
       messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
       domain: 18,
+    },
+    Monad_Testnet: {
+      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
+      domain: 15,
+    },
+    Codex_Testnet: {
+      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
+      domain: 12,
     },
   };
 
@@ -1022,7 +1050,8 @@ export default function BridgeUSDC() {
                                     (c.identifier === "Sei_Testnet" || 
                                      c.identifier === "World_Chain_Sepolia" || 
                                      c.identifier === "Linea_Sepolia") && "dark:invert",
-                                    c.identifier === "XDC_Apothem" && "invert dark:invert-0"
+                                    (c.identifier === "XDC_Apothem" || 
+                                     c.identifier === "Codex_Testnet") && "invert dark:invert-0"
                                   )} 
                                 />
                               )}
@@ -1143,7 +1172,8 @@ export default function BridgeUSDC() {
                                     (c.identifier === "Sei_Testnet" || 
                                      c.identifier === "World_Chain_Sepolia" || 
                                      c.identifier === "Linea_Sepolia") && "dark:invert",
-                                    c.identifier === "XDC_Apothem" && "invert dark:invert-0"
+                                    (c.identifier === "XDC_Apothem" || 
+                                     c.identifier === "Codex_Testnet") && "invert dark:invert-0"
                                   )} 
                                 />
                               )}

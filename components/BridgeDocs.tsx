@@ -67,6 +67,8 @@ export default function BridgeDocs() {
                   { name: "World Chain", icon: "https://ethglobal.storage/static/faucet/world-chain-sepolia.png", invert: true },
                   { name: "Ink Testnet", icon: "https://inkonchain.com/logo/ink-mark-light.webp" },
                   { name: "XDC Apothem", icon: "/xdc-faucet-logo.png", invertLight: true },
+                  { name: "Monad Testnet", icon: "https://ethglobal.storage/static/faucet/monad-testnet.png" },
+                  { name: "Codex Testnet", icon: "https://codex.xyz/logo.svg", invertLight: true },
                 ].map((network) => (
                   <div 
                     key={network.name}
