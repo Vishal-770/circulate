@@ -15,6 +15,7 @@ import {
   Code2,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export default function BridgeDocs() {
   return (
@@ -39,13 +40,52 @@ export default function BridgeDocs() {
               EVM-compatible testnets.
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-0 space-y-4">
+          <CardContent className="px-0 space-y-6">
             <p className="text-sm text-muted-foreground leading-relaxed">
               Built on top of <strong>Circle&apos;s Bridge Kit</strong>,
               Circulate eliminates the complexity of manual cross-chain
               transfers by handling liquidity abstraction and transaction
               routing in a single, unified interface.
             </p>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/60">
+                Supported Networks
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { name: "Arc Testnet", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png" },
+                  { name: "Base Sepolia", icon: "https://avatars.githubusercontent.com/u/108554348?s=200&v=4" },
+                  { name: "Arbitrum Sepolia", icon: "https://cryptologos.cc/logos/arbitrum-arb-logo.png" },
+                  { name: "Avalanche Fuji", icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+                  { name: "Ethereum Sepolia", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+                  { name: "OP Sepolia", icon: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.png" },
+                  { name: "Polygon Amoy", icon: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
+                  { name: "Unichain Sepolia", icon: "https://ethglobal.storage/static/faucet/unichain.png" },
+                  { name: "Linea Sepolia", icon: "https://ethglobal.storage/static/faucet/linea-sepolia.png", invert: true },
+                  { name: "Sei Testnet", icon: "https://cryptologos.cc/logos/sei-sei-logo.png", invert: true },
+                  { name: "World Chain", icon: "https://ethglobal.storage/static/faucet/world-chain-sepolia.png", invert: true },
+                  { name: "Ink Testnet", icon: "https://inkonchain.com/logo/ink-mark-light.webp" },
+                  { name: "XDC Apothem", icon: "/xdc-faucet-logo.png", invertLight: true },
+                ].map((network) => (
+                  <div 
+                    key={network.name}
+                    className="flex items-center gap-2 p-2 rounded-lg bg-background border border-border/50 transition-colors hover:border-primary/30"
+                  >
+                    <img 
+                      src={network.icon} 
+                      alt="" 
+                      className={cn(
+                        "h-4 w-4 rounded-full object-contain",
+                        network.invert && "dark:invert",
+                        network.invertLight && "invert dark:invert-0"
+                      )}
+                    />
+                    <span className="text-[10px] font-bold truncate">{network.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="flex gap-3">

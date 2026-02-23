@@ -36,7 +36,7 @@ import {
   unichainSepolia,
   lineaSepolia,
 } from "viem/chains";
-import { arcTestnet, customSepolia } from "@/lib/privy_config";
+import { arcTestnet, customSepolia, seiTestnet, worldChainSepolia, inkTestnet, xdcApothem } from "@/lib/privy_config";
 import { useQuery } from "@tanstack/react-query";
 import { cn, formatBalance } from "@/lib/utils";
 
@@ -105,7 +105,11 @@ type BridgeChain =
   | "Optimism_Sepolia"
   | "Polygon_Amoy_Testnet"
   | "Unichain_Sepolia"
-  | "Linea_Sepolia";
+  | "Linea_Sepolia"
+  | "Sei_Testnet"
+  | "World_Chain_Sepolia"
+  | "Ink_Testnet"
+  | "XDC_Apothem";
 
 const SUPPORTED_CHAINS = [
   {
@@ -208,7 +212,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0x31d0220469e10c4E71834a79b1f276d740d3768F",
     decimals: 6,
     symbol: "Uni",
-    icon: "https://cryptologos.cc/logos/uniswap-uni-logo.png",
+    icon: "https://ethglobal.storage/static/faucet/unichain.png",
   },
   {
     name: "Linea Sepolia",
@@ -217,7 +221,43 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0xFEce4462D57bD51A6A552365A011b95f0E16d9B7",
     decimals: 6,
     symbol: "Linea",
-    icon: "https://assets.coingecko.com/coins/images/30735/large/linea.png",
+    icon: "https://ethglobal.storage/static/faucet/linea-sepolia.png",
+  },
+  {
+    name: "Sei Testnet",
+    identifier: "Sei_Testnet" as BridgeChain,
+    viemChain: seiTestnet,
+    usdcAddress: "0x4fCF1784B31630811181f670Aea7A7bEF803eaED",
+    decimals: 6,
+    symbol: "Sei",
+    icon: "https://cryptologos.cc/logos/sei-sei-logo.png",
+  },
+  {
+    name: "World Chain Sepolia",
+    identifier: "World_Chain_Sepolia" as BridgeChain,
+    viemChain: worldChainSepolia,
+    usdcAddress: "0x66145f38cBAC35Ca6F1Dfb4914dF98F1614aeA88",
+    decimals: 6,
+    symbol: "WLD",
+    icon: "https://ethglobal.storage/static/faucet/world-chain-sepolia.png",
+  },
+  {
+    name: "Ink Testnet",
+    identifier: "Ink_Testnet" as BridgeChain,
+    viemChain: inkTestnet,
+    usdcAddress: "0xFabab97dCE620294D2B0b0e46C68964e326300Ac",
+    decimals: 6,
+    symbol: "Ink",
+    icon: "https://inkonchain.com/logo/ink-mark-light.webp",
+  },
+  {
+    name: "XDC Apothem",
+    identifier: "XDC_Apothem" as BridgeChain,
+    viemChain: xdcApothem,
+    usdcAddress: "0xb5AB69F7bBada22B28e79C8FFAECe55eF1c771D4",
+    decimals: 6,
+    symbol: "XDC",
+    icon: "/xdc-faucet-logo.png",
   },
 ];
 
@@ -295,6 +335,22 @@ const CCTP_CONFIG: Record<BridgeChain, { messenger: string; domain: number }> =
     Arc_Testnet: {
       messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
       domain: 26,
+    },
+    Sei_Testnet: {
+      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
+      domain: 16,
+    },
+    World_Chain_Sepolia: {
+      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
+      domain: 14,
+    },
+    Ink_Testnet: {
+      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
+      domain: 21,
+    },
+    XDC_Apothem: {
+      messenger: "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA",
+      domain: 18,
     },
   };
 
@@ -961,7 +1017,13 @@ export default function BridgeUSDC() {
                                 <img 
                                   src={c.icon} 
                                   alt="" 
-                                  className="h-4 w-4 rounded-full object-contain" 
+                                  className={cn(
+                                    "h-4 w-4 rounded-full object-contain",
+                                    (c.identifier === "Sei_Testnet" || 
+                                     c.identifier === "World_Chain_Sepolia" || 
+                                     c.identifier === "Linea_Sepolia") && "dark:invert",
+                                    c.identifier === "XDC_Apothem" && "invert dark:invert-0"
+                                  )} 
                                 />
                               )}
                               <span>{c.name}</span>
@@ -1076,7 +1138,13 @@ export default function BridgeUSDC() {
                                 <img 
                                   src={c.icon} 
                                   alt="" 
-                                  className="h-4 w-4 rounded-full object-contain" 
+                                  className={cn(
+                                    "h-4 w-4 rounded-full object-contain",
+                                    (c.identifier === "Sei_Testnet" || 
+                                     c.identifier === "World_Chain_Sepolia" || 
+                                     c.identifier === "Linea_Sepolia") && "dark:invert",
+                                    c.identifier === "XDC_Apothem" && "invert dark:invert-0"
+                                  )} 
                                 />
                               )}
                               <span>{c.name}</span>
@@ -1185,29 +1253,7 @@ export default function BridgeUSDC() {
 
             <Separator className="opacity-50" />
             
-            <div className="px-6 py-4">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-3">
-                Supported Networks
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {SUPPORTED_CHAINS.map((c) => (
-                  <div 
-                    key={c.identifier} 
-                    className="group relative"
-                    title={c.name}
-                  >
-                    <div className="h-8 w-8 rounded-full border border-border bg-muted/30 p-1.5 transition-all hover:border-primary/50 hover:bg-muted/50">
-                      <img 
-                        src={c.icon} 
-                        alt={c.name} 
-                        className="h-full w-full object-contain filter grayscale opacity-60 transition-all group-hover:grayscale-0 group-hover:opacity-100" 
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
+          
             <CardFooter className="pt-2">
               {!isValidAmount &&
               parseFloat(amount) > parseFloat(sourceBalance) ? (
