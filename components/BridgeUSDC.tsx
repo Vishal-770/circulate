@@ -217,7 +217,7 @@ const SUPPORTED_CHAINS = [
     usdcAddress: "0xFEce4462D57bD51A6A552365A011b95f0E16d9B7",
     decimals: 6,
     symbol: "Linea",
-    icon: "https://avatars.githubusercontent.com/u/120616142?s=200&v=4", // Linea Logo
+    icon: "https://assets.coingecko.com/coins/images/30735/large/linea.png",
   },
 ];
 
