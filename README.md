@@ -57,4 +57,4 @@ Circulate provides a unified interface for 18 distinct testnet environments:
     Open [http://localhost:3000](http://localhost:3000) and start moving USDC.
 
 ---
-Built with 🖤 for the multi-chain future.
+
